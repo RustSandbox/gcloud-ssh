@@ -17,16 +17,16 @@ pub const AUTHOR: &str = "Your Name";
 pub mod animations {
     /// Whether to enable animations
     pub const ENABLED: bool = true;
-    
+
     /// Typing effect speed (milliseconds per character)
     pub const TYPING_SPEED_MS: u64 = 10;
-    
+
     /// Default spinner duration in milliseconds
     pub const SPINNER_DURATION_MS: u64 = 1000;
-    
+
     /// Progress bar steps
     pub const PROGRESS_BAR_STEPS: u64 = 20;
-    
+
     /// Progress bar duration in milliseconds
     pub const PROGRESS_BAR_DURATION_MS: u64 = 1500;
 }
@@ -35,22 +35,22 @@ pub mod animations {
 pub mod styles {
     /// Primary color for titles and important information
     pub const PRIMARY_COLOR: &str = "cyan";
-    
+
     /// Secondary color for sub-headings and highlights
     pub const SECONDARY_COLOR: &str = "yellow";
-    
+
     /// Success message color
     pub const SUCCESS_COLOR: &str = "green";
-    
+
     /// Information message color
     pub const INFO_COLOR: &str = "blue";
-    
+
     /// Warning message color
     pub const WARNING_COLOR: &str = "yellow";
-    
+
     /// Error message color
     pub const ERROR_COLOR: &str = "red";
-    
+
     /// Box drawing style: "single", "double", "rounded", or "bold"
     pub const BOX_STYLE: &str = "rounded";
 }
@@ -59,16 +59,16 @@ pub mod styles {
 pub mod layout {
     /// Terminal width in characters (0 for auto-detect)
     pub const TERMINAL_WIDTH: usize = 0;
-    
+
     /// Padding size for framed messages
     pub const FRAME_PADDING: usize = 2;
-    
+
     /// Default frame width if terminal width detection fails
     pub const DEFAULT_FRAME_WIDTH: usize = 80;
-    
+
     /// Horizontal rule character
     pub const HORIZONTAL_RULE_CHAR: &str = "─";
-    
+
     /// Indent size for list items
     pub const LIST_INDENT: usize = 2;
 }
@@ -77,13 +77,12 @@ pub mod layout {
 pub mod help {
     /// Tutorial mode (show more detailed help)
     pub const TUTORIAL_MODE: bool = true;
-    
+
     /// Show tips and hints during operation
     pub const SHOW_TIPS: bool = true;
-    
+
     /// Keyboard shortcuts help text
-    pub const KEYBOARD_SHORTCUTS: &str = 
-        "Keyboard shortcuts:\n\
+    pub const KEYBOARD_SHORTCUTS: &str = "Keyboard shortcuts:\n\
         - Press ↑/↓ to navigate\n\
         - Press Enter to select\n\
         - Press q to quit at any prompt";
@@ -93,28 +92,28 @@ pub mod help {
 pub mod emojis {
     /// Success indicators
     pub const SUCCESS: &[&str] = &["✅", "🎉", "🚀"];
-    
+
     /// Information indicators
     pub const INFO: &[&str] = &["ℹ️", "💡", "🔍"];
-    
+
     /// Warning indicators
     pub const WARNING: &[&str] = &["⚠️", "🔔", "❗"];
-    
+
     /// Error indicators
     pub const ERROR: &[&str] = &["❌", "🛑", "💔"];
-    
+
     /// SSH-related icons
     pub const SSH: &[&str] = &["🔑", "🔒", "🖥️", "🌐"];
-    
+
     /// IP address icon
     pub const IP_ADDRESS: &str = "🌐";
-    
+
     /// VM instance icon
     pub const VM: &str = "🖥️";
-    
+
     /// SSH key icon
     pub const KEY: &str = "🔑";
-    
+
     /// Zone/location icon
     pub const ZONE: &str = "📍";
-} 
+}

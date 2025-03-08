@@ -9,7 +9,6 @@ A Rust command-line utility that automates SSH key management and Google Cloud V
 - **🔒 Secure Key Deployment**: Automatically copies your public SSH key to the selected VM.
 - **🖥️ Ready-to-Use SSH Command**: Generates the exact SSH command you need to connect to your VM.
 - **🎨 Rich Terminal Interface**: Beautiful ASCII art, animations, and color-coded information.
-- **📱 Responsive Design**: Adapts to your terminal size for optimal display.
 
 ## 🛠️ Prerequisites
 
@@ -21,28 +20,32 @@ Before using this tool, ensure you have:
 
 ## 📦 Installation
 
-### Option 1: Quick Install (Recommended)
+### Option 1: One-Step Setup (Recommended)
 
-Build and install the application system-wide:
-
-```bash
-# Build the release version
-cargo build --release
-
-# Install system-wide (requires sudo)
-sudo ./install.sh
-
-# Or install for current user only
-./install.sh
-```
-
-After installation, you can run the application from anywhere:
+Run the setup script to build, install, and configure your PATH in one step:
 
 ```bash
-gcloud-ssh
+./setup.sh
 ```
 
-### Option 2: Manual Installation
+### Option 2: Using Makefile
+
+For more control, use the Makefile:
+
+```bash
+# Build in debug mode
+make
+
+# Build optimized release
+make release
+
+# Install to ~/.local/bin
+make install
+```
+
+Type `make help` to see all available commands.
+
+### Option 3: Manual Installation
 
 If you prefer to install manually:
 
@@ -51,12 +54,13 @@ If you prefer to install manually:
 cargo build --release
 
 # Copy to a directory in your PATH
+mkdir -p ~/.local/bin
 cp target/release/hcloud ~/.local/bin/gcloud-ssh
 chmod +x ~/.local/bin/gcloud-ssh
 
-# Make sure ~/.local/bin is in your PATH
-echo 'export PATH=$PATH:~/.local/bin' >> ~/.bashrc  # or ~/.zshrc
-source ~/.bashrc  # or ~/.zshrc
+# Add to PATH if needed
+echo 'export PATH=$PATH:~/.local/bin' >> ~/.zshrc  # or ~/.bashrc
+source ~/.zshrc  # or ~/.bashrc
 ```
 
 ## 🚀 Usage
@@ -67,7 +71,7 @@ Run the application:
 gcloud-ssh
 ```
 
-You can also use these command-line options:
+Command-line options:
 
 ```bash
 # Show help
@@ -80,57 +84,39 @@ gcloud-ssh --version
 gcloud-ssh --update
 ```
 
-The application will guide you through the process with a beautiful interface:
+The application will guide you through:
 
-1. 🔍 Check/generate SSH keys
-2. 📊 List available VM instances
-3. 🔖 Let you select a VM
-4. 📤 Copy your SSH key to the VM
-5. 📝 Show you the exact SSH command to connect
+1. 🔍 Checking/generating SSH keys
+2. 📊 Listing available VM instances
+3. 🔖 Selecting a VM to connect to
+4. 📤 Copying your SSH key to the VM
+5. 📝 Showing the exact SSH command to connect
 
 ## 🧩 How It Works
 
-1. The tool first checks if you have an SSH key pair in the standard location (`~/.ssh/id_rsa` and `~/.ssh/id_rsa.pub`).
-2. If no key exists, it uses `gcloud compute ssh-keys create` to generate a new key pair.
-3. It retrieves a list of your VM instances using `gcloud compute instances list`.
-4. It displays an interactive selection menu showing VM names, zones, and IP addresses.
+1. The tool checks if you have an SSH key pair in `~/.ssh/id_rsa` and `~/.ssh/id_rsa.pub`.
+2. If no key exists, it generates a new key pair using `gcloud compute ssh-keys create`.
+3. It retrieves your VM instances using `gcloud compute instances list`.
+4. It displays an interactive selection menu with your VMs.
 5. Once you select a VM, it copies your public key to the VM's `~/.ssh/authorized_keys` file.
-6. Finally, it constructs and displays the SSH command you can use to connect to the VM.
+6. Finally, it shows you the exact SSH command to connect.
 
-## 🎨 Terminal Interface Features
+## 🎨 Terminal Interface
 
-The application includes several terminal interface enhancements:
+The application includes:
 
-- **📊 ASCII Art Banner**: A beautiful banner greets you on startup
+- **📊 ASCII Art Banner**: Beautiful welcome banner
 - **🎬 Animations**: Typing effects, spinners, and progress bars
 - **🎨 Color-Coded Information**: Different colors for different types of information
-- **📦 Boxed Messages**: Important information is displayed in stylish boxes
-- **📏 Responsive Layout**: Adapts to your terminal size
-- **✨ Emoji Support**: Uses emojis for better visual cues
+- **📦 Boxed Messages**: Important information displayed in stylish boxes
 
 ## ⚙️ Customization
 
-You can customize the interface by modifying the `config.rs` file:
+Modify the `config.rs` file to customize:
 
-- **Animation Settings**: Enable/disable animations and adjust their timing
-- **Color Schemes**: Change the color theme to match your preferences
-- **Layout Options**: Adjust the terminal layout settings
-- **Help Text**: Configure the level of guidance provided
-- **Emojis**: Customize the emojis used for different message types
-
-## 🔄 Updating the Application
-
-To update to the latest version:
-
-```bash
-# Check for updates
-gcloud-ssh --update
-
-# Or update manually
-git pull
-cargo build --release
-sudo ./install.sh
-```
+- **Animation Settings**: Enable/disable animations and timing
+- **Color Schemes**: Change the color theme
+- **Emojis**: Customize emojis used for different messages
 
 ## 🔧 Troubleshooting
 
@@ -140,7 +126,20 @@ If you encounter issues:
 - Verify your active project: `gcloud config get-value project`
 - Check VM access permissions in Google Cloud Console
 - Run with verbose output: `RUST_LOG=debug gcloud-ssh`
-- Make sure the application is correctly installed in your PATH
+
+## 👨‍💻 About the Author
+
+I'm Hamze Ghalebi, CTO at Remolab, passionate about building tools that improve developer workflows. This Google Cloud SSH Manager is part of a collection of tools I originally built for my own use, and I've decided to open source it in case others find it helpful.
+
+Many of the tools I create solve specific pain points in my daily workflow with cloud infrastructure and development environments. If you have any feedback or suggestions for improvements, please feel free to contribute!
+
+### Connect with me:
+- GitHub: [hghalebi](https://github.com/hghalebi)
+- Twitter/X: [@hamzeml](https://twitter.com/hamzeml)
+- Website: [linkedin](https://www.linkedin.com/in/hamze/)
+
+### Support this project:
+If you find this tool useful, please consider [sponsoring me on GitHub](https://github.com/sponsors/hghalebi) to support continued development and maintenance.
 
 ## 📄 License
 
