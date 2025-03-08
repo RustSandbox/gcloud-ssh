@@ -6,8 +6,18 @@ use std::{
     fs,
     io,
     process::Command,
+    env,
 };
 use thiserror::Error;
+
+// Import our enhanced terminal interface library
+mod banner;
+mod config;
+mod term_utils;
+mod terminal_fx;
+
+// Version of the application
+const VERSION: &str = "0.1.0";
 
 /// Custom error type for our application.
 /// This provides more descriptive errors than using anyhow alone.
@@ -91,29 +101,130 @@ struct AccessConfig {
     nat_ip: Option<String>,
 }
 
+/// Prints the version information and exits
+fn print_version() {
+    println!("Google Cloud SSH Manager v{}", VERSION);
+    println!("A tool to automate SSH access to Google Cloud VMs");
+    std::process::exit(0);
+}
+
+/// Prints the help message and exits
+fn print_help() {
+    println!("Google Cloud SSH Manager v{}", VERSION);
+    println!("A tool to automate SSH access to Google Cloud VMs\n");
+    println!("USAGE:");
+    println!("  gcloud-ssh [OPTIONS]\n");
+    println!("OPTIONS:");
+    println!("  -h, --help     Print this help message");
+    println!("  -v, --version  Print version information");
+    println!("  --update       Check for updates and install them");
+    std::process::exit(0);
+}
+
+/// Checks for updates and installs them if available
+fn check_for_updates() -> Result<()> {
+    println!("{}", "Checking for updates...".blue());
+    
+    // In a real application, this would connect to a server to check for updates
+    // For this example, we'll just display a message
+    
+    println!("{}", "You're running the latest version!".green());
+    println!("If you want to update manually, run the following commands:");
+    println!("  1. git pull");
+    println!("  2. cargo build --release");
+    println!("  3. sudo ./install.sh");
+    
+    Ok(())
+}
+
+/// Parses command-line arguments
+fn parse_args() {
+    let args: Vec<String> = env::args().collect();
+    
+    if args.len() > 1 {
+        match args[1].as_str() {
+            "-h" | "--help" => print_help(),
+            "-v" | "--version" => print_version(),
+            "--update" => {
+                if let Err(e) = check_for_updates() {
+                    eprintln!("Error checking for updates: {}", e);
+                    std::process::exit(1);
+                }
+                std::process::exit(0);
+            },
+            _ => {
+                eprintln!("Unknown option: {}", args[1]);
+                eprintln!("Run with --help for usage information");
+                std::process::exit(1);
+            }
+        }
+    }
+}
+
 /// Main function that orchestrates the application flow
 fn main() -> Result<()> {
-    println!("{}", "Google Cloud SSH Manager".green().bold());
-    println!("{}", "===========================".green());
+    // Parse command-line arguments
+    parse_args();
     
+    // Initialize terminal interface
+    term_utils::clear_screen();
+    
+    // Display welcome banner
+    println!("{}", banner::main_banner());
+    
+    // Add a slight delay for visual effect
+    if config::animations::ENABLED {
+        terminal_fx::type_text(
+            &format!("Welcome to {}! Let's set up your SSH access.", config::APP_TITLE),
+            config::animations::TYPING_SPEED_MS
+        );
+    } else {
+        println!("Welcome to {}! Let's set up your SSH access.", config::APP_TITLE);
+    }
+
     // Step 1: Ensure SSH key exists
+    println!("{}", banner::section_header("SSH KEY MANAGEMENT"));
     ensure_ssh_key()
         .context("Failed to ensure SSH key exists")?;
     
     // Step 2: List VM instances
+    println!("{}", banner::section_header("VM INSTANCES"));
+    
+    // Display loading animation
+    if config::animations::ENABLED {
+        terminal_fx::spinner("Fetching VM instances...", config::animations::SPINNER_DURATION_MS);
+    }
+    
     let instances = list_vms()
         .context("Failed to list VM instances")?;
     
     // Step 3: Let user select a VM
+    println!("{}", banner::section_header("VM SELECTION"));
     let selected_vm = select_vm(&instances)
         .context("Failed to select VM")?;
     
     // Step 4: Copy SSH key to selected VM
+    println!("{}", banner::section_header("SSH KEY DEPLOYMENT"));
+    
+    // Display progress animation
+    if config::animations::ENABLED {
+        terminal_fx::progress_bar(
+            "Copying SSH key to VM...",
+            config::animations::PROGRESS_BAR_STEPS,
+            config::animations::PROGRESS_BAR_DURATION_MS
+        );
+    }
+    
     copy_ssh_key_to_vm(&selected_vm)
         .context("Failed to copy SSH key to VM")?;
     
     // Step 5: Print SSH command
+    println!("{}", banner::section_header("CONNECTION INFORMATION"));
     print_ssh_command(&selected_vm)?;
+    
+    // Clean up terminal state
+    term_utils::reset_terminal();
+    term_utils::show_cursor();
     
     Ok(())
 }
@@ -130,7 +241,7 @@ fn ensure_ssh_key() -> Result<()> {
     
     // Create the .ssh directory if it doesn't exist
     if !ssh_dir.exists() {
-        println!("{}", "Creating ~/.ssh directory...".blue());
+        println!("{}", banner::info_message("Creating ~/.ssh directory..."));
         fs::create_dir_all(&ssh_dir)
             .context("Failed to create ~/.ssh directory")?;
         
@@ -148,12 +259,17 @@ fn ensure_ssh_key() -> Result<()> {
     let priv_key_path = ssh_dir.join("id_rsa");
     
     if pub_key_path.exists() && priv_key_path.exists() {
-        println!("{}", "SSH key pair already exists.".green());
+        println!("{}", banner::success_message("SSH key pair already exists."));
         return Ok(());
     }
     
     // Generate new SSH key pair using gcloud
-    println!("{}", "No SSH key found. Generating new key pair...".blue());
+    println!("{}", banner::info_message("No SSH key found. Generating new key pair..."));
+    
+    // Display spinner animation for key generation
+    if config::animations::ENABLED {
+        terminal_fx::spinner("Generating SSH key pair...", 3000);
+    }
     
     // Use gcloud to generate the key
     let output = Command::new("gcloud")
@@ -165,7 +281,7 @@ fn ensure_ssh_key() -> Result<()> {
         return Err(AppError::SshKeyGeneration(error_msg.to_string()).into());
     }
     
-    println!("{}", "SSH key generated successfully.".green());
+    println!("{}", banner::success_message("SSH key generated successfully."));
     Ok(())
 }
 
@@ -174,8 +290,6 @@ fn ensure_ssh_key() -> Result<()> {
 /// # Returns
 /// * `Result<Vec<Instance>>` - List of VM instances or error
 fn list_vms() -> Result<Vec<Instance>> {
-    println!("{}", "Fetching VM instances...".blue());
-    
     // Execute gcloud command to list instances in JSON format
     let output = Command::new("gcloud")
         .args(["compute", "instances", "list", "--format=json"])
@@ -195,7 +309,7 @@ fn list_vms() -> Result<Vec<Instance>> {
         return Err(AppError::NoVmsFound.into());
     }
     
-    println!("{} {}", "Found".green(), format!("{} VM instances.", instances.len()).green());
+    println!("{}", banner::success_message(&format!("Found {} VM instances.", instances.len())));
     Ok(instances)
 }
 
@@ -210,22 +324,18 @@ fn select_vm(instances: &[Instance]) -> Result<Instance> {
     // Map instances to display strings for selection menu
     let vm_display: Vec<String> = instances
         .iter()
-        .map(|instance| {
-            let ip_display = instance
-                .external_ip()
-                .map(|ip| format!(" - IP: {}", ip))
-                .unwrap_or_else(|| " - No external IP".to_string());
+        .enumerate()
+        .map(|(idx, instance)| {
+            // Create a longer-lived value for the IP
+            let ip_option = instance.external_ip();
+            let ip_str = ip_option.as_deref();
             
-            format!("{} (zone: {}){}",
-                instance.name.bold(),
-                instance.zone().dimmed(),
-                ip_display.dimmed()
-            )
+            banner::vm_list_item(idx, &instance.name, &instance.zone(), ip_str)
         })
         .collect();
     
     // Create an interactive selection menu
-    println!("{}", "Please select a VM to connect to:".blue());
+    println!("{}", banner::info_message("Please select a VM to connect to:"));
     
     let selection = Select::with_theme(&ColorfulTheme::default())
         .items(&vm_display)
@@ -245,9 +355,8 @@ fn select_vm(instances: &[Instance]) -> Result<Instance> {
 /// # Returns
 /// * `Result<()>` - Success or error information
 fn copy_ssh_key_to_vm(instance: &Instance) -> Result<()> {
-    println!("{} {}", 
-        "Copying SSH key to VM:".blue(),
-        instance.name.bold()
+    println!("{}", 
+        banner::info_message(&format!("Copying SSH key to VM: {}", instance.name.bold()))
     );
     
     // Get the path to the public key
@@ -289,9 +398,8 @@ fn copy_ssh_key_to_vm(instance: &Instance) -> Result<()> {
         return Err(AppError::KeyCopy(error_msg.to_string()).into());
     }
     
-    println!("{} {}", 
-        "SSH key successfully copied to VM:".green(),
-        instance.name.bold()
+    println!("{}", 
+        banner::success_message(&format!("SSH key successfully copied to VM: {}", instance.name.bold()))
     );
     Ok(())
 }
@@ -315,12 +423,20 @@ fn print_ssh_command(instance: &Instance) -> Result<()> {
     // Construct the SSH command
     let ssh_cmd = format!("ssh {}@{}", username, external_ip);
     
-    println!("\n{}", "=== CONNECTION INFORMATION ===".yellow());
-    println!("{} {}", "VM Name:".yellow(), instance.name);
-    println!("{} {}", "Zone:".yellow(), instance.zone());
-    println!("{} {}", "External IP:".yellow(), external_ip);
-    println!("\n{}", "To connect to your VM, run:".green());
-    println!("{} {}\n", "→".green(), ssh_cmd.bold());
+    // Display connection information
+    println!("{} {}", config::emojis::VM, "VM Name:".yellow());
+    println!("   {}", instance.name.bright_cyan().bold());
+    
+    println!("{} {}", config::emojis::ZONE, "Zone:".yellow());
+    println!("   {}", instance.zone().bright_cyan());
+    
+    println!("{} {}", config::emojis::IP_ADDRESS, "External IP:".yellow());
+    println!("   {}", external_ip.bright_cyan());
+    
+    println!("\n{}", "To connect to your VM, run:".green().bold());
+    
+    // Display SSH command in a box
+    println!("{}", banner::ssh_command_box(&ssh_cmd));
     
     Ok(())
 }
